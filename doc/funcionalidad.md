@@ -9,7 +9,7 @@
 # Servidor:
 - Gestión de Conexiones: El servidor acepta conexiones a través de sockets y utiliza hilos para manejar múltiples clientes simultáneamente.
 - Manejo de Peticiones HTTP: El servidor procesa las peticiones HTTP recibidas de los clientes.
-Web Scraping: Se utiliza BeautifulSoup con concurrencia para buscar resultados en diferentes sitios web, buscando el mejor precio para los libros solicitados.
-Lógica de Selección: El servidor utiliza una lógica específica para determinar el mejor resultado, considerando factores como el precio, disponibilidad y otros criterios.
+- Web Scraping: Se utiliza BeautifulSoup con concurrencia para buscar resultados en diferentes sitios web, buscando el mejor precio para los libros solicitados.
+- Lógica de Selección: El servidor utiliza una lógica específica para determinar el mejor resultado, considerando factores como el precio, disponibilidad y otros criterios.
 - Manejo de Errores: Se implementan mecanismos para detectar y gestionar diferentes tipos de errores, incluyendo datos inválidos, problemas de conexión, libros no encontrados, errores en el proceso de web scraping, entre otros.
 
