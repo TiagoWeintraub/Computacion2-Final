@@ -141,11 +141,11 @@ ScrapingServer().concurrent_scraping(9789504988014, session)
 #                 print(f"Error procesando {store}: {e}")
 
 # # Uso del ScrapingServer
-# isbn = "9781408855676"
+# isbn = "9789504988014"
 # server = ScrapingServer()
 # server.concurrent_scraping(isbn, session)
 # server.process_queue()
-
+# ScrapingServer().concurrent_scraping(9789504988014, session)
 
 
 

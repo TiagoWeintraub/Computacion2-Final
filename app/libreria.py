@@ -14,7 +14,6 @@ class Libreria:
         self.casassa_url = f"https://www.casassaylorenzo.com/resultados.aspx?c={isbn}&por=isbn"
         self.sbs_url = f"https://www.sbs.com.ar/{isbn}"
 
-
     def scrap_cuspide(self, session):
         response = session.get(self.cuspide_url)
 
@@ -51,63 +50,65 @@ class Libreria:
                     precio_formateado = str(precio.text.strip("\n$\xa0"))
                     precio_formateado = precio_formateado.replace(".", "")
                     precio_formateado = precio_formateado.replace(",", ".")
-                    self.informacion_cuspide['precio'] = precio_formateado 
+                    self.informacion_cuspide['precio'] = float(str(precio_formateado))
                 except Exception as e:
                     self.informacion_cuspide['precio'] = "No encontrado"
 
             else:
                 self.informacion_cuspide = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado'}
             
-            print(self.informacion_cuspide)
+            print("Cuspide: ", self.informacion_cuspide)
             return self.informacion_cuspide
         else:
             print(f"Error en la respuesta de la página Cuspide: {response.status_code}")
             self.informacion_cuspide = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado'}
-
 
     def scrap_casassa(self, session):
         response = session.get(self.casassa_url)
 
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
-            titulo = soup.find('a', id='ContentPlaceHolderContenido_rptFicha_a_titulo_0')
-            print(titulo)
+            titulo = soup.find('a', id='ContentPlaceHolderContenido_resultadosItems_rptResultados_a_titulo_0')
             if titulo:
                 try: #BUSCAMOS TITULO 0
                     titulo_formateado = str(titulo.text.strip("\n\t"))
                     self.informacion_casassa['libro'] = titulo_formateado
-                    print(titulo_formateado)
                 except Exception as e:
                     self.informacion_casassa['libro'] = "Libro no encontrado"
 
                 try: #BUSCAMOS AUTOR 1
-                    autor = soup.find('a', id='ContentPlaceHolderContenido_rptFicha_rptAutores_0_a_autor_0')
+                    autor = soup.find('a', id='ContentPlaceHolderContenido_resultadosItems_rptResultados_rptAutores_0_a_autor_0')
                     autor_formateado = str(autor.text.strip("\n\t"))
                     self.informacion_casassa['autor'] = autor_formateado
                 except Exception as e:
-                    self.informacion_casassa['autor'] = "No aplica"
+                    self.informacion_casassa['autor'] = "Autor no encontrado"
 
                 try: #BUSCAMOS PRECIO 2
-                    precio = soup.find('p', id='ContentPlaceHolderContenido_rptFicha_precioContainer_0')
-                    precio_formateado = str(precio.text.strip(""))
-                    precio_formateado = precio_formateado.replace("\xa0\xa0U$S", " |")
-                    precio_formateado = precio_formateado.replace("\n\n\n$AR", "")
-                    precio_formateado = precio_formateado.strip()
-                    precio_formateado = precio_formateado.replace(".", "")
-                    precio_formateado = precio_formateado.replace(",", ".")
-                    lista_precio = precio_formateado.split()
-                    self.informacion_casassa['precio'] = lista_precio[0]
-                except Exception as e:
-                    self.informacion_casassa['precio'] = "No aplica"
+                    a_tag = soup.find('a', attrs={'data-precio': True})
+                    if a_tag:
+                        # Obtener el valor del atributo data-precio
+                        data_precio = a_tag['data-precio']
 
-                else:
-                    self.informacion_casassa = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado'}
-                print(self.informacion_casassa)
+                        # Parsear el contenido de data-precio como HTML
+                        precio_soup = BeautifulSoup(data_precio, 'html.parser')
+
+                        # Extraer el texto dentro de data-precio
+                        precio = precio_soup.get_text(strip=True).replace("$AR", "")
+                        precio = precio.replace(".", "")
+                        precio = precio.replace(",", ".")
+                        self.informacion_casassa['precio'] = float(str(precio))
+                        print("Precio: ", precio)
+                    else:
+                        self.informacion_casassa['precio'] = "Precio no encontrado"
+                except Exception as e:
+                    self.informacion_casassa['precio'] = "Precio no encontrado"
+
             else:
                 print(f"Error el scraping de casassa: {response.status_code}, {response.url}")
+                print(f"No entra en el if porque no encuentra el titulo, el titulo es {titulo}")
                 self.informacion_casassa = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado'}
             
-            print(self.informacion_casassa)
+            print("Casassa: ",self.informacion_casassa)
             return self.informacion_casassa
         else:
             print(f"Error en la respuesta de la página casassa: {response.status_code}, {response.url}")
