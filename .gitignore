@@ -1,6 +1,18 @@
 # DS_Store files
 .DS_Store
 
+# Venv files
+venv/
+env/
+ENV/
+bin/
+include/
+lib/
+lib64/
+pyvenv.cfg
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
