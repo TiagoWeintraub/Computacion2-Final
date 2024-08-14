@@ -1,4 +1,4 @@
-# Funcionalidad del Sistema Better Search:
+# Funcionalidad del Sistema Best Search:
 
 
 # Cliente:

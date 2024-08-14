@@ -28,7 +28,7 @@ class Libreria:
                         titulo_formateado = str(titulo.text.strip("\n\t"))
                         self.informacion_cuspide['libro'] = titulo_formateado
                 except Exception as e:
-                    self.informacion_cuspide['libro'] = "Libro no encontrado"
+                    self.informacion_cuspide['libro'] = None
 
                 try: # Autor 2
                     div_autor = soup.find('div', class_='product-info summary col-fit col entry-summary product-summary text-left form-minimal')
@@ -36,7 +36,7 @@ class Libreria:
                     limpiando_autor = autor.text.strip()
                     self.informacion_cuspide['autor'] = limpiando_autor 
                 except Exception as e:
-                    self.informacion_cuspide['autor'] = "No encontrado"
+                    self.informacion_cuspide['autor'] = None
 
                 try: # Precio 3
                     precio = soup.find('p', class_='price product-page-price')
@@ -45,16 +45,16 @@ class Libreria:
                     precio_formateado = precio_formateado.replace(",", ".")
                     self.informacion_cuspide['precio'] = float(str(precio_formateado))
                 except Exception as e:
-                    self.informacion_cuspide['precio'] = "No encontrado"
+                    self.informacion_cuspide['precio'] = None
 
             else:
-                self.informacion_cuspide = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado', 'libreria': 'Cúspide'}
+                self.informacion_cuspide = {'isbn': self.isbn, 'libro': None, 'autor': None ,'precio': None, 'libreria': 'Cúspide'}
             
             # print("Cuspide: ", self.informacion_cuspide)
             return self.informacion_cuspide
         else:
             print(f"Error en la respuesta de la página Cuspide: {response.status_code}")
-            self.informacion_cuspide = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado', 'libreria': 'Cúspide'}
+            self.informacion_cuspide = {'isbn': self.isbn, 'libro': None, 'autor': None ,'precio': None, 'libreria': 'Cúspide'}
 
 
     def scrap_casassa(self, session):
@@ -68,14 +68,14 @@ class Libreria:
                     titulo_formateado = str(titulo.text.strip("\n\t"))
                     self.informacion_casassa['libro'] = titulo_formateado
                 except Exception as e:
-                    self.informacion_casassa['libro'] = "Libro no encontrado"
+                    self.informacion_casassa['libro'] = None
 
                 try: #BUSCAMOS AUTOR 
                     autor = soup.find('a', id='ContentPlaceHolderContenido_resultadosItems_rptResultados_rptAutores_0_a_autor_0')
                     autor_formateado = str(autor.text.strip("\n\t"))
                     self.informacion_casassa['autor'] = autor_formateado
                 except Exception as e:
-                    self.informacion_casassa['autor'] = "Autor no encontrado"
+                    self.informacion_casassa['autor'] = None
 
                 try: #BUSCAMOS PRECIO 
                     a_tag = soup.find('a', attrs={'data-precio': True})
@@ -87,20 +87,19 @@ class Libreria:
                         precio = precio.replace(",", ".")
                         self.informacion_casassa['precio'] = float(str(precio))
                     else:
-                        self.informacion_casassa['precio'] = "Precio no encontrado"
+                        self.informacion_casassa['precio'] = None
                 except Exception as e:
-                    self.informacion_casassa['precio'] = "Precio no encontrado"
+                    self.informacion_casassa['precio'] = None
 
             else:
-                print(f"Error el scraping de casassa: {response.status_code}, {response.url}")
-                print(f"No entra en el if porque no encuentra el titulo, el titulo es {titulo}")
-                self.informacion_casassa = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado', 'libreria': 'Casassa y Lorenzo'}
+                print(f"Libro no encontrado en casassa: {response.status_code}, {response.url}")
+                self.informacion_casassa = {'isbn': self.isbn, 'libro': None, 'autor': None ,'precio': None, 'libreria': 'Casassa y Lorenzo'}
             
             # print("Casassa: ",self.informacion_casassa)
             return self.informacion_casassa
         else:
             print(f"Error en la respuesta de la página casassa: {response.status_code}, {response.url}")
-            self.informacion_casassa = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado', 'libreria': 'Casassa y Lorenzo'}
+            self.informacion_casassa = {'isbn': self.isbn, 'libro': None, 'autor': None ,'precio': None, 'libreria': 'Casassa y Lorenzo'}
 
 
     def scrap_sbs(self, session):
@@ -134,7 +133,7 @@ class Libreria:
                                 autor_formateado = str(autor.upper())
                                 self.informacion_sbs["autor"] = autor_formateado
                             else:
-                                self.informacion_sbs["autor"] = "Autor no encontrado"
+                                self.informacion_sbs["autor"] = None
 
                             # PRECIO
                             precio = self.find_price_sbs(data)
@@ -147,22 +146,22 @@ class Libreria:
                                 else:
                                     self.informacion_sbs["precio"] = precio_lista
                             else:
-                                self.informacion_sbs["precio"] = "Precio no encontrado"
+                                self.informacion_sbs["precio"] = None
                         else:
-                            self.informacion_sbs = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado', 'libreria': 'Sbs'}
+                            self.informacion_sbs = {'isbn': self.isbn, 'libro': None, 'autor': None ,'precio': None, 'libreria': 'Sbs'}
                 except Exception as e:
                     print("Error en el Script de Sbs: ", e)
-                    self.informacion_sbs['autor'] = "Autor no encontrado"
+                    self.informacion_sbs['autor'] = None
 
             except Exception as e:
                 print(f"Error en la respuesta de la página Sbs: {e}, {response.url}")
-                self.informacion_sbs = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado', 'libreria': 'Sbs'}
+                self.informacion_sbs = {'isbn': self.isbn, 'libro': None, 'autor': None ,'precio': None, 'libreria': 'Sbs'}
 
             # print("SBS: ", self.informacion_sbs)
             return self.informacion_sbs
         else:
             print(f"Error en la respuesta de la página Sbs: {response.status_code}, {response.url}")
-            self.informacion_sbs = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado', 'libreria': 'Sbs'}
+            self.informacion_sbs = {'isbn': self.isbn, 'libro': None, 'autor': None ,'precio': None, 'libreria': 'Sbs'}
 
     def find_price_sbs(self, data):
         results = []

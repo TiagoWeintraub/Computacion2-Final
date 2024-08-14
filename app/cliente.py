@@ -9,25 +9,43 @@ class Cliente:
     def conectar(self):
         try:
             self.client_socket.connect((self.host, self.port))
-            print(f"Conectado al servidor en {self.host}:{self.port}")
+            print(f"""\n_________________________________________________________________\n\n._________________ ¡Bienvenido a BEST SEARCH! __________________.\n:::::....... Conectado al servidor en {self.host}:{self.port} .......:::::\n_________________________________________________________________\n
+                """)
         except Exception as e:
             print(f"No se pudo conectar al servidor: {e}")
+            self.cerrar_conexion()
 
     def enviar_isbn(self, isbn):
         try:
             self.client_socket.send(isbn.encode())
-            print(f"ISBN enviado: {isbn}")
+            print(f"\n Código ISBN enviado: {isbn}")
 
             response = self.client_socket.recv(1024).decode()
             print(f"Respuesta del servidor: {response}")
         except Exception as e:
             print(f"Error al enviar ISBN o recibir respuesta: {e}")
-        finally:
-            self.client_socket.close()
+
+    def cerrar_conexion(self):
+        self.client_socket.close()
+        print("\nConexión cerrada\n")
 
 if __name__ == "__main__":
-    cliente = Cliente()  # Asegúrate de que el host y puerto coincidan con los del servidor
+    cliente = Cliente()
     cliente.conectar()
 
-    isbn = input("Introduce el ISBN13 del libro: ")
-    cliente.enviar_isbn(isbn)
+    while True:
+        isbn = input("\n|---> Introduce el código ISBN13 del libro ('Q' para salir): ")
+
+        # Validación del ISBN o 'q' para salir
+        if len(isbn) != 13 and isbn.lower() != 'q':
+            print("\nError | El ISBN ingresado no tiene 13 dígitos o ingresó un caracter no válido, intente de nuevo.")
+            continue
+
+        # Si el usuario escribe 'q', se cierra la conexión y termina el programa
+        if isbn.lower() == 'q':
+            cliente.cerrar_conexion()
+            break
+
+        # Enviar el ISBN al servidor
+        cliente.enviar_isbn(isbn)
+

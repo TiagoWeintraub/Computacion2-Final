@@ -99,44 +99,74 @@ class Servidor:
             client_socket, client_address = self.server_socket.accept()
             print(f"Cliente conectado desde {client_address}")
             self.logs.log_info(f"Cliente conectado desde {client_address}")
-
             # Crear un nuevo proceso para manejar el cliente
-            client_handler = Process(target=self.handle_client, args=(client_socket,))
+            client_handler = Process(target=self.manejar_cliente, args=(client_socket,))
             client_handler.start()
-
             # Cerrar el socket en el proceso principal, el proceso hijo lo manejará
             client_socket.close()
 
-    def handle_client(self, client_socket):
-        try:
-            isbn = client_socket.recv(1024).decode()
-            if len(isbn) == 13:
-                print(f"Recibido ISBN: {isbn}")
-                self.logs.log_info(f"ISBN recibido: {isbn}")
-
-                scraper = Scraping(isbn)
-                resultados = scraper.concurrent_scraping()
-
-                if resultados:
-                    menor_precio = min((res for res in resultados if res is not None), key=lambda x: x['precio'])
-                    respuesta = f"El menor precio es {menor_precio['precio']} en la librería {menor_precio['libreria']}"
-                    client_socket.send(respuesta.encode())
-                    print(f"Enviado al cliente: {respuesta}")
-                    self.logs.log_info(f"Enviado al cliente: {respuesta}")
-                else:
-                    client_socket.send("Error al obtener precios".encode())
-                    self.logs.log_error(f"Error al obtener precios para el ISBN: {isbn}")
-            elif len(isbn) != 13:
-                client_socket.send("ISBN no válido".encode())
-                self.logs.log_error(f"ISBN no válido proporcionado por el cliente: {isbn}")
+    def obtener_menor_precio(self, isbn, resultados):
+        resultados_filtrados = []
+        for res in resultados:
+            print('Resultadooo: ',res)
+            if res is not None and res['precio'] is not None and res['precio'] != 0:
+                print(res)
+                resultados_filtrados.append(res)
             else:
-                client_socket.send("ISBN no proporcionado".encode())
-                self.logs.log_error("ISBN no proporcionado por el cliente")
+                print(f"No se encuentra información del libro código ISBN13: {isbn}") 
+                self.logs.log_error(f"No se encuentra información del libro código ISBN13: {isbn}")
+                return f"No se encuentra información del libro código ISBN13: {isbn}"
+
+        if len(resultados_filtrados) != 0:
+            menor_precio = resultados_filtrados[0]  # Arranca con el primer resultado
+            for resultado in resultados_filtrados:
+                if resultado['precio'] < menor_precio['precio']:
+                    menor_precio = resultado
+            return f"El precio más bajo es de {menor_precio['precio']} en {menor_precio['libreria']}"
+        
+        else:
+            return "No se encuentra información del libro código ISBN13: {isbn}"
+
+
+
+    def manejar_cliente(self, client_socket):
+        try:
+            while True:
+                # Recibir el ISBN del cliente
+                isbn = client_socket.recv(1024).decode()
+                
+                # Si no se recibe ningún dato (cliente cierra la conexión), salir del bucle
+                if not isbn:
+                    print("Cliente desconectado")
+                    break
+                
+                # Validar y procesar el ISBN
+                if len(isbn) == 13:
+                    print(f"Recibido ISBN: {isbn}")
+                    self.logs.log_info(f"ISBN recibido: {isbn}")
+
+                    scraper = Scraping(isbn)
+                    resultados = scraper.concurrent_scraping()
+
+                    if resultados:
+                        respuesta = self.obtener_menor_precio(isbn, resultados)
+                        client_socket.send(respuesta.encode())
+                        print(f"Enviado al cliente: {respuesta}")
+                        self.logs.log_info(f"Enviado al cliente: {respuesta}")
+                    else:
+                        client_socket.send("Error al obtener precios".encode())
+                        self.logs.log_error(f"Error al obtener precios para el ISBN: {isbn}")
+                elif len(isbn) != 13:
+                    client_socket.send("ISBN no válido".encode())
+                    self.logs.log_error(f"ISBN no válido proporcionado por el cliente: {isbn}")
+                else:
+                    client_socket.send("ISBN no proporcionado".encode())
+                    self.logs.log_error("ISBN no proporcionado por el cliente")
         except Exception as e:
-            print(f"Error al manejar cliente: {e}, se cerrará el servidor")
+            print(f"Error al manejar cliente: {e}")
             self.logs.log_error(f"Error al manejar cliente: {e}")
-        finally:
-            client_socket.close()
+
+
 
 if __name__ == "__main__":
 
