@@ -20,11 +20,11 @@ class Scraping:
                 print("Scrapeando Cuspide")
                 self.queue.put(response)
                 informacion_cuspide = Lib(self.isbn).scrap_cuspide(session)
-                print(informacion_cuspide)
+                # print(informacion_cuspide)
                 return informacion_cuspide
         except Exception as e:
             print(f"Error al scrapear Cuspide: {e}")
-            return None
+            return {'isbn': self.isbn, 'libro': None, 'autor': None ,'precio': None, 'libreria': 'Cúspide'}
 
     def casassa_page_response(self):
         try:
@@ -33,11 +33,11 @@ class Scraping:
                 print("Scrapeando Casassa")
                 self.queue.put(response)
                 informacion_casassa = Lib(self.isbn).scrap_casassa(session)
-                print(informacion_casassa)
+                # print(informacion_casassa)
                 return informacion_casassa
         except Exception as e:
             print(f"Error al scrapear Casassa: {e}")
-            return None
+            return {'isbn': self.isbn, 'libro': None, 'autor': None ,'precio': None, 'libreria': 'Casassa y Lorenzo'}
 
     def sbs_page_response(self):
         try:
@@ -46,11 +46,11 @@ class Scraping:
                 print("Scrapeando SBS")
                 self.queue.put(response)
                 informacion_sbs = Lib(self.isbn).scrap_sbs(session)
-                print(informacion_sbs)
+                # print(informacion_sbs)
                 return informacion_sbs
         except Exception as e:
             print(f"Error al scrapear SBS: {e}")
-            return None
+            return {'isbn': self.isbn, 'libro': None, 'autor': None ,'precio': None, 'libreria': 'Sbs'}
 
     def concurrent_scraping(self):
         try:
@@ -105,27 +105,29 @@ class Servidor:
             # Cerrar el socket en el proceso principal, el proceso hijo lo manejará
             client_socket.close()
 
+    def stop_server(self):
+        self.server_socket.close()
+        print("Servidor detenido")
+        self.logs.log_info("Servidor detenido")
     def obtener_menor_precio(self, isbn, resultados):
         resultados_filtrados = []
         for res in resultados:
-            print('Resultadooo: ',res)
-            if res is not None and res['precio'] is not None and res['precio'] != 0:
-                print(res)
+            if res['precio'] is not None and res['precio'] != 0:
                 resultados_filtrados.append(res)
-            else:
-                print(f"No se encuentra información del libro código ISBN13: {isbn}") 
-                self.logs.log_error(f"No se encuentra información del libro código ISBN13: {isbn}")
-                return f"No se encuentra información del libro código ISBN13: {isbn}"
+
+        menor_precio = 1000000000
 
         if len(resultados_filtrados) != 0:
-            menor_precio = resultados_filtrados[0]  # Arranca con el primer resultado
             for resultado in resultados_filtrados:
-                if resultado['precio'] < menor_precio['precio']:
-                    menor_precio = resultado
-            return f"El precio más bajo es de {menor_precio['precio']} en {menor_precio['libreria']}"
-        
+                if resultado['precio'] < menor_precio:
+                    menor_precio = resultado['precio']
+                    libreria_conveniente = resultado
+            respuesta = f"\nRespuesta del servidor:\n______________________________ BEST SEARCH _______________________________\n\nEl libro se encuentra al mejor precio en {libreria_conveniente['libreria']}:\n\n|---> ISBN13: {isbn}\n|---> TÍTULO: {libreria_conveniente['libro']}\n|---> AUTOR: {libreria_conveniente['autor']}\n|---> PRECIO: ${libreria_conveniente['precio']} ARS\n_________________________________________________________________________\n "
+            return respuesta
         else:
-            return "No se encuentra información del libro código ISBN13: {isbn}"
+            self.logs.log_error(f"No se encuentra información del libro código ISBN13: {isbn}")
+            return f"\nRespuesta del servidor:\nNo se encuentra información del libro código ISBN13 en ninguna de las librerías: {isbn}"
+
 
 
 

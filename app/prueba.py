@@ -1,3 +1,0 @@
-lista = []
-
-print(len(lista))

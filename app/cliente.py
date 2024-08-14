@@ -5,15 +5,17 @@ class Cliente:
         self.host = host
         self.port = port
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.conexion = False
 
     def conectar(self):
         try:
+            self.conexion = True
             self.client_socket.connect((self.host, self.port))
-            print(f"""\n_________________________________________________________________\n\n._________________ ¡Bienvenido a BEST SEARCH! __________________.\n:::::....... Conectado al servidor en {self.host}:{self.port} .......:::::\n_________________________________________________________________\n
-                """)
+            print(f"""\n._____________________ ¡Bienvenido a BEST SEARCH! ______________________.\n\n:::::........... Conectado al servidor en {self.host}:{self.port} ...........:::::\n\n  Web Scraping en librerías: Cúspide - Casassa y Lorenzo - Sbs\n_________________________________________________________________________""")
         except Exception as e:
             print(f"No se pudo conectar al servidor: {e}")
             self.cerrar_conexion()
+            self.conexion = False
 
     def enviar_isbn(self, isbn):
         try:
@@ -21,7 +23,7 @@ class Cliente:
             print(f"\n Código ISBN enviado: {isbn}")
 
             response = self.client_socket.recv(1024).decode()
-            print(f"Respuesta del servidor: {response}")
+            print(response)
         except Exception as e:
             print(f"Error al enviar ISBN o recibir respuesta: {e}")
 
@@ -33,7 +35,7 @@ if __name__ == "__main__":
     cliente = Cliente()
     cliente.conectar()
 
-    while True:
+    while cliente.conexion:
         isbn = input("\n|---> Introduce el código ISBN13 del libro ('Q' para salir): ")
 
         # Validación del ISBN o 'q' para salir

@@ -4,9 +4,9 @@ import json
 class Libreria:
     def __init__(self, isbn):
         self.isbn = isbn
-        self.informacion_cuspide = {'isbn': isbn, 'libro': '', 'autor': '' ,'precio': '', 'libreria': 'Cúspide'}
-        self.informacion_casassa = {'isbn': isbn, 'libro': '', 'autor': '' ,'precio': '', 'libreria': 'Casassa y Lorenzo'}
-        self.informacion_sbs = {'isbn': isbn, 'libro': '', 'autor': '' ,'precio': '', 'libreria': 'Sbs'}
+        self.informacion_cuspide = {'isbn': isbn, 'libro': '', 'autor': '' ,'precio': '', 'libreria': 'CÚSPIDE'}
+        self.informacion_casassa = {'isbn': isbn, 'libro': '', 'autor': '' ,'precio': '', 'libreria': 'CASASSA Y LORENZO'}
+        self.informacion_sbs = {'isbn': isbn, 'libro': '', 'autor': '' ,'precio': '', 'libreria': 'SBS'}
         self.cuspide_url = f"https://cuspide.com/?s={isbn}&post_type=product"
         self.casassa_url = f"https://www.casassaylorenzo.com/resultados.aspx?c={isbn}&por=isbn"
         self.sbs_url = f"https://www.sbs.com.ar/{isbn}"
@@ -92,13 +92,13 @@ class Libreria:
                     self.informacion_casassa['precio'] = None
 
             else:
-                print(f"Libro no encontrado en casassa: {response.status_code}, {response.url}")
+                print(f"Libro no encontrado en Casassa y Lorenzo: {response.url}")
                 self.informacion_casassa = {'isbn': self.isbn, 'libro': None, 'autor': None ,'precio': None, 'libreria': 'Casassa y Lorenzo'}
             
             # print("Casassa: ",self.informacion_casassa)
             return self.informacion_casassa
         else:
-            print(f"Error en la respuesta de la página casassa: {response.status_code}, {response.url}")
+            print(f"Error en la respuesta de la página Casassa y Lorenzo: {response.status_code}, {response.url}")
             self.informacion_casassa = {'isbn': self.isbn, 'libro': None, 'autor': None ,'precio': None, 'libreria': 'Casassa y Lorenzo'}
 
 
