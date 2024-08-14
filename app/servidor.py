@@ -11,14 +11,12 @@ session = requests.Session()
 class Scraping:
     def __init__(self, isbn):
         self.isbn = isbn
-        self.queue = Queue()
 
     def cuspide_page_response(self):
         try:
             response = session.get(Lib(self.isbn).cuspide_url)
             if response.status_code == 200:
                 print("Scrapeando Cuspide")
-                self.queue.put(response)
                 informacion_cuspide = Lib(self.isbn).scrap_cuspide(session)
                 # print(informacion_cuspide)
                 return informacion_cuspide
@@ -31,7 +29,6 @@ class Scraping:
             response = session.get(Lib(self.isbn).casassa_url)
             if response.status_code == 200:
                 print("Scrapeando Casassa")
-                self.queue.put(response)
                 informacion_casassa = Lib(self.isbn).scrap_casassa(session)
                 # print(informacion_casassa)
                 return informacion_casassa
@@ -44,7 +41,6 @@ class Scraping:
             response = session.get(Lib(self.isbn).sbs_url)
             if response.status_code == 200:
                 print("Scrapeando SBS")
-                self.queue.put(response)
                 informacion_sbs = Lib(self.isbn).scrap_sbs(session)
                 # print(informacion_sbs)
                 return informacion_sbs
@@ -82,10 +78,98 @@ class Logs:
     def log_error(self, message):
         self.logger.error(message)
 
+# class Servidor:
+#     def __init__(self, host='localhost', port=5000):
+#         self.host = host
+#         self.port = port
+#         self.contador_clientes = 0
+#         self.logs = Logs()
+#         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+#     def start_server(self):
+#         self.server_socket.bind((self.host, self.port))
+#         self.server_socket.listen(5)
+#         print(f"Servidor escuchando en {self.host}:{self.port}")
+#         self.logs.log_info(f"Servidor iniciado en {self.host}:{self.port}")
+
+#         while True:
+#             client_socket, client_address = self.server_socket.accept()
+#             print(f"Cliente conectado desde {client_address}")
+#             self.logs.log_info(f"Cliente conectado desde {client_address}")
+#             # Crear un nuevo proceso para manejar el cliente
+#             client_handler = Process(target=self.manejar_cliente, args=(client_socket,))
+#             client_handler.start()
+#             # Cerrar el socket en el proceso principal, el proceso hijo lo manejará
+#             client_socket.close()
+
+#     def stop_server(self):
+#         self.server_socket.close()
+#         print("Servidor detenido")
+#         self.logs.log_info("Servidor detenido")
+#     def obtener_menor_precio(self, isbn, resultados):
+#         resultados_filtrados = []
+#         for res in resultados:
+#             if res['precio'] is not None and res['precio'] != 0:
+#                 resultados_filtrados.append(res)
+
+#         menor_precio = 1000000000
+
+#         if len(resultados_filtrados) != 0:
+#             for resultado in resultados_filtrados:
+#                 if resultado['precio'] < menor_precio:
+#                     menor_precio = resultado['precio']
+#                     libreria_conveniente = resultado
+#             respuesta = f"\nRespuesta del servidor:\n______________________________ BEST SEARCH _______________________________\n\nEl libro se encuentra al mejor precio en {libreria_conveniente['libreria']}:\n\n|---> ISBN13: {isbn}\n|---> TÍTULO: {libreria_conveniente['libro']}\n|---> AUTOR: {libreria_conveniente['autor']}\n|---> PRECIO: ${libreria_conveniente['precio']} ARS\n_________________________________________________________________________\n "
+#             return respuesta
+#         else:
+#             self.logs.log_error(f"No se encuentra información del libro código ISBN13: {isbn}")
+#             return f"\nRespuesta del servidor:\nNo se encuentra información del libro código ISBN13 en ninguna de las librerías: {isbn}"
+
+
+
+
+#     def manejar_cliente(self, client_socket):
+#         try:
+#             while True:
+#                 # Recibir el ISBN del cliente
+#                 isbn = client_socket.recv(1024).decode()
+                
+#                 # Si no se recibe ningún dato (cliente cierra la conexión), salir del bucle
+#                 if not isbn:
+#                     print("Cliente desconectado")
+#                     break
+                
+#                 # Validar y procesar el ISBN
+#                 if len(isbn) == 13:
+#                     print(f"Recibido ISBN: {isbn}")
+#                     self.logs.log_info(f"ISBN recibido: {isbn}")
+
+#                     scraper = Scraping(isbn)
+#                     resultados = scraper.concurrent_scraping()
+
+#                     if resultados:
+#                         respuesta = self.obtener_menor_precio(isbn, resultados)
+#                         client_socket.send(respuesta.encode())
+#                         print(f"Enviado al cliente: {respuesta}")
+#                         self.logs.log_info(f"Enviado al cliente: {respuesta}")
+#                     else:
+#                         client_socket.send("Error al obtener precios".encode())
+#                         self.logs.log_error(f"Error al obtener precios para el ISBN: {isbn}")
+#                 elif len(isbn) != 13:
+#                     client_socket.send("ISBN no válido".encode())
+#                     self.logs.log_error(f"ISBN no válido proporcionado por el cliente: {isbn}")
+#                 else:
+#                     client_socket.send("ISBN no proporcionado".encode())
+#                     self.logs.log_error("ISBN no proporcionado por el cliente")
+#         except Exception as e:
+#             print(f"Error al manejar cliente: {e}")
+#             self.logs.log_error(f"Error al manejar cliente: {e}")
+
 class Servidor:
     def __init__(self, host='localhost', port=5000):
         self.host = host
         self.port = port
+        self.contador_clientes = 0
         self.logs = Logs()
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -94,21 +178,65 @@ class Servidor:
         self.server_socket.listen(5)
         print(f"Servidor escuchando en {self.host}:{self.port}")
         self.logs.log_info(f"Servidor iniciado en {self.host}:{self.port}")
+        print(f"Clientes Conectados: {self.contador_clientes}")
 
         while True:
             client_socket, client_address = self.server_socket.accept()
-            print(f"Cliente conectado desde {client_address}")
-            self.logs.log_info(f"Cliente conectado desde {client_address}")
+            self.contador_clientes += 1
+            print(f"Cliente {self.contador_clientes} conectado desde {client_address}")
+            print(f"Clientes Conectados: {self.contador_clientes}")
+            self.logs.log_info(f"Cliente {self.contador_clientes} conectado desde {client_address}")
+            self.logs.log_info(f"Clientes Conectados: {self.contador_clientes}")
+            
+            # Enviar mensaje de bienvenida al cliente
+            mensaje_bienvenida = f"Cliente {self.contador_clientes}"
+            client_socket.send(mensaje_bienvenida.encode())
+
             # Crear un nuevo proceso para manejar el cliente
             client_handler = Process(target=self.manejar_cliente, args=(client_socket,))
             client_handler.start()
+            
             # Cerrar el socket en el proceso principal, el proceso hijo lo manejará
             client_socket.close()
 
-    def stop_server(self):
-        self.server_socket.close()
-        print("Servidor detenido")
-        self.logs.log_info("Servidor detenido")
+    def manejar_cliente(self, client_socket):
+        try:
+            while True:
+                isbn = client_socket.recv(1024).decode()
+                if not isbn:
+                    print(f"Cliente {self.contador_clientes} desconectado ")
+                    self.logs.log_info(f"Cliente {self.contador_clientes} desconectado")
+                    self.contador_clientes -= 1
+                    print(f"Clientes Conectados: {self.contador_clientes}")
+                    break
+                
+                if len(isbn) == 13:
+                    print(f"Recibido ISBN: {isbn}")
+                    self.logs.log_info(f"ISBN recibido: {isbn}")
+
+                    scraper = Scraping(isbn)
+                    resultados = scraper.concurrent_scraping()
+
+                    if resultados:
+                        respuesta = self.obtener_menor_precio(isbn, resultados)
+                        client_socket.send(respuesta.encode())
+                        print(f"Enviado al cliente: {respuesta}")
+                        self.logs.log_info(f"Enviado al cliente {self.contador_clientes}: {respuesta}")
+                    else:
+                        client_socket.send("Error al obtener precios".encode())
+                        self.logs.log_error(f"Error al obtener precios para el ISBN: {isbn}, Cliente {self.contador_clientes}")
+                elif len(isbn) != 13:
+                    client_socket.send("ISBN no válido".encode())
+                    self.logs.log_error(f"ISBN no válido proporcionado por el cliente {self.contador_clientes}: {isbn}")
+                else:
+                    client_socket.send("ISBN no proporcionado".encode())
+                    self.logs.log_error(f"ISBN no proporcionado por el cliente {self.contador_clientes}")
+        except Exception as e:
+            print(f"Error al manejar cliente: {e}")
+            self.logs.log_error(f"Error al manejar cliente: {e}")
+        # finally:
+        #     client_socket.close()
+        
     def obtener_menor_precio(self, isbn, resultados):
         resultados_filtrados = []
         for res in resultados:
@@ -127,47 +255,6 @@ class Servidor:
         else:
             self.logs.log_error(f"No se encuentra información del libro código ISBN13: {isbn}")
             return f"\nRespuesta del servidor:\nNo se encuentra información del libro código ISBN13 en ninguna de las librerías: {isbn}"
-
-
-
-
-    def manejar_cliente(self, client_socket):
-        try:
-            while True:
-                # Recibir el ISBN del cliente
-                isbn = client_socket.recv(1024).decode()
-                
-                # Si no se recibe ningún dato (cliente cierra la conexión), salir del bucle
-                if not isbn:
-                    print("Cliente desconectado")
-                    break
-                
-                # Validar y procesar el ISBN
-                if len(isbn) == 13:
-                    print(f"Recibido ISBN: {isbn}")
-                    self.logs.log_info(f"ISBN recibido: {isbn}")
-
-                    scraper = Scraping(isbn)
-                    resultados = scraper.concurrent_scraping()
-
-                    if resultados:
-                        respuesta = self.obtener_menor_precio(isbn, resultados)
-                        client_socket.send(respuesta.encode())
-                        print(f"Enviado al cliente: {respuesta}")
-                        self.logs.log_info(f"Enviado al cliente: {respuesta}")
-                    else:
-                        client_socket.send("Error al obtener precios".encode())
-                        self.logs.log_error(f"Error al obtener precios para el ISBN: {isbn}")
-                elif len(isbn) != 13:
-                    client_socket.send("ISBN no válido".encode())
-                    self.logs.log_error(f"ISBN no válido proporcionado por el cliente: {isbn}")
-                else:
-                    client_socket.send("ISBN no proporcionado".encode())
-                    self.logs.log_error("ISBN no proporcionado por el cliente")
-        except Exception as e:
-            print(f"Error al manejar cliente: {e}")
-            self.logs.log_error(f"Error al manejar cliente: {e}")
-
 
 
 if __name__ == "__main__":

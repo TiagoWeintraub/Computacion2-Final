@@ -11,7 +11,8 @@ class Cliente:
         try:
             self.conexion = True
             self.client_socket.connect((self.host, self.port))
-            print(f"""\n._____________________ ¡Bienvenido a BEST SEARCH! ______________________.\n\n:::::........... Conectado al servidor en {self.host}:{self.port} ...........:::::\n\n  Web Scraping en librerías: Cúspide - Casassa y Lorenzo - Sbs\n_________________________________________________________________________""")
+            cliente = self.client_socket.recv(1024).decode()
+            print(f"""\n______________________ ¡Bienvenido a BEST SEARCH! ________________________\n\n :::.... {cliente} ya está conectado al servidor en {self.host}:{self.port} ....:::\n\n  Web Scraping en librerías: Cúspide - Casassa y Lorenzo - Sbs\n__________________________________________________________________________""")
         except Exception as e:
             print(f"No se pudo conectar al servidor: {e}")
             self.cerrar_conexion()
@@ -38,16 +39,12 @@ if __name__ == "__main__":
     while cliente.conexion:
         isbn = input("\n|---> Introduce el código ISBN13 del libro ('Q' para salir): ")
 
-        # Validación del ISBN o 'q' para salir
-        if len(isbn) != 13 and isbn.lower() != 'q':
+        if len(isbn) != 13 and isbn.lower() != 'q': # Validación del ISBN o 'q' para salir
             print("\nError | El ISBN ingresado no tiene 13 dígitos o ingresó un caracter no válido, intente de nuevo.")
             continue
-
-        # Si el usuario escribe 'q', se cierra la conexión y termina el programa
         if isbn.lower() == 'q':
             cliente.cerrar_conexion()
             break
 
-        # Enviar el ISBN al servidor
-        cliente.enviar_isbn(isbn)
+        cliente.enviar_isbn(isbn) # Enviar el ISBN al servidor
 
