@@ -4,9 +4,9 @@ import json
 class Libreria:
     def __init__(self, isbn):
         self.isbn = isbn
-        self.informacion_cuspide = {'isbn': isbn, 'libro': '', 'autor': '' ,'precio': ''}
-        self.informacion_casassa = {'isbn': isbn, 'libro': '', 'autor': '' ,'precio': ''}
-        self.informacion_sbs = {'isbn': isbn, 'libro': '', 'autor': '' ,'precio': ''}
+        self.informacion_cuspide = {'isbn': isbn, 'libro': '', 'autor': '' ,'precio': '', 'libreria': 'Cúspide'}
+        self.informacion_casassa = {'isbn': isbn, 'libro': '', 'autor': '' ,'precio': '', 'libreria': 'Casassa y Lorenzo'}
+        self.informacion_sbs = {'isbn': isbn, 'libro': '', 'autor': '' ,'precio': '', 'libreria': 'Sbs'}
         self.cuspide_url = f"https://cuspide.com/?s={isbn}&post_type=product"
         self.casassa_url = f"https://www.casassaylorenzo.com/resultados.aspx?c={isbn}&por=isbn"
         self.sbs_url = f"https://www.sbs.com.ar/{isbn}"
@@ -48,13 +48,14 @@ class Libreria:
                     self.informacion_cuspide['precio'] = "No encontrado"
 
             else:
-                self.informacion_cuspide = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado'}
+                self.informacion_cuspide = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado', 'libreria': 'Cúspide'}
             
             # print("Cuspide: ", self.informacion_cuspide)
             return self.informacion_cuspide
         else:
             print(f"Error en la respuesta de la página Cuspide: {response.status_code}")
-            self.informacion_cuspide = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado'}
+            self.informacion_cuspide = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado', 'libreria': 'Cúspide'}
+
 
     def scrap_casassa(self, session):
         response = session.get(self.casassa_url)
@@ -93,26 +94,14 @@ class Libreria:
             else:
                 print(f"Error el scraping de casassa: {response.status_code}, {response.url}")
                 print(f"No entra en el if porque no encuentra el titulo, el titulo es {titulo}")
-                self.informacion_casassa = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado'}
+                self.informacion_casassa = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado', 'libreria': 'Casassa y Lorenzo'}
             
             # print("Casassa: ",self.informacion_casassa)
             return self.informacion_casassa
         else:
             print(f"Error en la respuesta de la página casassa: {response.status_code}, {response.url}")
-            self.informacion_casassa = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado'}
+            self.informacion_casassa = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado', 'libreria': 'Casassa y Lorenzo'}
 
-
-    def find_price_sbs(self, data):
-        results = []
-        if isinstance(data, dict):
-            if "highPrice" in data and "lowPrice" in data:
-                results.append((data["highPrice"], data["lowPrice"]))
-            for key in data:
-                results.extend(self.find_price_sbs(data[key]))
-        elif isinstance(data, list):
-            for item in data:
-                results.extend(self.find_price_sbs(item))
-        return results
 
     def scrap_sbs(self, session):
         response = session.get(self.sbs_url)
@@ -160,18 +149,29 @@ class Libreria:
                             else:
                                 self.informacion_sbs["precio"] = "Precio no encontrado"
                         else:
-                            self.informacion_sbs = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado'}
+                            self.informacion_sbs = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado', 'libreria': 'Sbs'}
                 except Exception as e:
                     print("Error en el Script de Sbs: ", e)
                     self.informacion_sbs['autor'] = "Autor no encontrado"
 
             except Exception as e:
                 print(f"Error en la respuesta de la página Sbs: {e}, {response.url}")
-                self.informacion_sbs = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado'}
+                self.informacion_sbs = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado', 'libreria': 'Sbs'}
 
             # print("SBS: ", self.informacion_sbs)
             return self.informacion_sbs
         else:
             print(f"Error en la respuesta de la página Sbs: {response.status_code}, {response.url}")
-            self.informacion_sbs = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado'}
+            self.informacion_sbs = {'isbn': self.isbn, 'libro': 'Libro no encontrado', 'autor': 'Autor no encontrado' ,'precio': 'Precio no encontrado', 'libreria': 'Sbs'}
 
+    def find_price_sbs(self, data):
+        results = []
+        if isinstance(data, dict):
+            if "highPrice" in data and "lowPrice" in data:
+                results.append((data["highPrice"], data["lowPrice"]))
+            for key in data:
+                results.extend(self.find_price_sbs(data[key]))
+        elif isinstance(data, list):
+            for item in data:
+                results.extend(self.find_price_sbs(item))
+        return results

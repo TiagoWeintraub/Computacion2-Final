@@ -3,12 +3,10 @@ from queue import Queue
 from concurrent.futures import ThreadPoolExecutor
 import requests
 import logging
-import threading
 from libreria import Libreria as Lib
+from multiprocessing import Process
 
-# Ejemplo de ISBN: 9789501298321
-# Falta que el servidor maneje múltiples conexiones de clientes, tira error
-# Manejar bien el cliente, los log y las excepciones. Verificar que los logs son un proceso separado
+session = requests.Session()
 
 class Scraping:
     def __init__(self, isbn):
@@ -62,12 +60,12 @@ class Scraping:
                 future3 = executor.submit(self.sbs_page_response)
 
                 # Esperamos a que terminen las 3 tareas
-                results = [
+                resultados = [
                     future1.result(),
                     future2.result(),
                     future3.result()
                 ]
-                return results
+                return resultados
         except Exception as e:
             print(f"Error en concurrent_scraping: {e}")
             return None
@@ -102,8 +100,12 @@ class Servidor:
             print(f"Cliente conectado desde {client_address}")
             self.logs.log_info(f"Cliente conectado desde {client_address}")
 
-            client_handler = threading.Thread(target=self.handle_client, args=(client_socket,))
+            # Crear un nuevo proceso para manejar el cliente
+            client_handler = Process(target=self.handle_client, args=(client_socket,))
             client_handler.start()
+
+            # Cerrar el socket en el proceso principal, el proceso hijo lo manejará
+            client_socket.close()
 
     def handle_client(self, client_socket):
         try:
@@ -113,14 +115,14 @@ class Servidor:
                 self.logs.log_info(f"ISBN recibido: {isbn}")
 
                 scraper = Scraping(isbn)
-                results = scraper.concurrent_scraping()
+                resultados = scraper.concurrent_scraping()
 
-                if results:
-                    min_price_info = min((res for res in results if res is not None), key=lambda x: x['price'])
-                    response = f"El menor precio es {min_price_info['price']} en la librería {min_price_info['store']}"
-                    client_socket.send(response.encode())
-                    print(f"Enviado al cliente: {response}")
-                    self.logs.log_info(f"Enviado al cliente: {response}")
+                if resultados:
+                    menor_precio = min((res for res in resultados if res is not None), key=lambda x: x['precio'])
+                    respuesta = f"El menor precio es {menor_precio['precio']} en la librería {menor_precio['libreria']}"
+                    client_socket.send(respuesta.encode())
+                    print(f"Enviado al cliente: {respuesta}")
+                    self.logs.log_info(f"Enviado al cliente: {respuesta}")
                 else:
                     client_socket.send("Error al obtener precios".encode())
                     self.logs.log_error(f"Error al obtener precios para el ISBN: {isbn}")
@@ -133,12 +135,10 @@ class Servidor:
         except Exception as e:
             print(f"Error al manejar cliente: {e}, se cerrará el servidor")
             self.logs.log_error(f"Error al manejar cliente: {e}")
-            self.server_socket.close()
-
         finally:
             client_socket.close()
 
 if __name__ == "__main__":
-    session = requests.Session()
+
     server = Servidor(port=5005)
     server.start_server()
