@@ -12,7 +12,7 @@ class Cliente:
             self.conexion = True
             self.client_socket.connect((self.host, self.port))
             cliente = self.client_socket.recv(1024).decode()
-            print(f"""\n______________________ ¡Bienvenido a BEST SEARCH! ________________________\n\n :::.... {cliente} ya está conectado al servidor en {self.host}:{self.port} ....:::\n\n  Web Scraping en librerías: Cúspide - Casassa y Lorenzo - Sbs\n__________________________________________________________________________""")
+            print(f"""\n______________________ ¡Bienvenido a BEST SEARCH! ________________________\n\n :::.... {cliente} ya está conectado al servidor en {self.host}:{self.port} ....:::\n\n    Web Scraping en librerías: Cúspide - Casassa y Lorenzo - Sbs\n__________________________________________________________________________""")
         except Exception as e:
             print(f"No se pudo conectar al servidor: {e}")
             self.cerrar_conexion()
