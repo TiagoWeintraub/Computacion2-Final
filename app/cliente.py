@@ -29,6 +29,7 @@ class Cliente:
             print(f"Error al enviar ISBN o recibir respuesta: {e}")
 
     def cerrar_conexion(self):
+        self.enviar_isbn("q")
         self.client_socket.close()
         print("\nConexión cerrada\n")
 

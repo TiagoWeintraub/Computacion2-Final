@@ -1,10 +1,10 @@
 import logging
-from multiprocessing import Process
+from multiprocessing import Process, Queue
+import os
 
 class Logs:
     def __init__(self, log_file="server.log"):
         self.log_file = log_file
-        self.configurar_logger()
 
     def configurar_logger(self):
         logging.basicConfig(filename=self.log_file, level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -16,6 +16,7 @@ class Logs:
         return log_process
 
     def log_listener(self, log_queue):
+        self.configurar_logger()
         while True:
             log_message = log_queue.get()
             if log_message is None:
@@ -26,3 +27,10 @@ class Logs:
                 self.logger.error(message)
             else:
                 self.logger.info(message)
+
+if __name__ == "__main__":
+    log_queue = Queue()
+    logger = Logs()
+    log_process = logger.iniciar_logs(log_queue)
+    print(f"PID del log_process: {log_process.pid}")
+    log_process.join()
