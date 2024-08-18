@@ -1,0 +1,11 @@
+# Ignorar archivos y directorios innecesarios
+*.pyc
+__pycache__/
+.env
+.bin
+.lib
+.include
+pyvenv.cfg
+.git/
+.dockerignore
+Dockerfile

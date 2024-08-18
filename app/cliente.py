@@ -1,25 +1,32 @@
 import socket
 
 class Cliente:
-    def __init__(self, host_ipv4='127.0.0.1', host_ipv6='::1', port=5005):
+    def __init__(self, host_ipv4='127.0.0.1', host_ipv6='::1', port_ipv4=5555, port_ipv6=5556):
         self.host_ipv4 = host_ipv4
         self.host_ipv6 = host_ipv6
-        self.port = port
+        self.port_ipv4 = port_ipv4
+        self.port_ipv6 = port_ipv6
         self.client_socket = None
         self.conexion = False
 
     def configurar_conexion(self):
-        tipo_conexion = input("¿Desea usar IPv4 o IPv6? (4/6): ").strip()
+        tipo_conexion = input("\n¿Desea usar IPv4 o IPv6? (4/6): ").strip() #Backslash para escapar el caracter especial en la cadena de texto: '4/6' -> '4\/6'
+        while tipo_conexion not in ['4', '6']:
+            tipo_conexion = input("\nOpción no válida. | Por favor, elija '4' para IPv4 o '6' para IPv6: ").strip()
+
         if tipo_conexion == '4':
             self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.host = self.host_ipv4
+            self.port = self.port_ipv4
         elif tipo_conexion == '6':
             self.client_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
             self.host = self.host_ipv6
+            self.port = self.port_ipv6
         else:
-            print("Opción no válida. Por favor, elija '4' para IPv4 o '6' para IPv6.")
+            print("Opción no válida. | Por favor, elija '4' para IPv4 o '6' para IPv6.")
             return False
         return True
+
 
     def conectar(self):
         if not self.configurar_conexion():

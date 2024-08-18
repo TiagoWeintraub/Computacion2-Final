@@ -20,7 +20,7 @@ class Logs:
         while True:
             log_message = log_queue.get()
             if log_message is None:
-                break  # Señal para terminar el proceso
+                break
             log_type = log_message.get('type')
             message = log_message.get('message')
             if log_type == 'ERROR':
