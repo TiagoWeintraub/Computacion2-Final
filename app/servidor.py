@@ -5,6 +5,7 @@ import requests
 from logs import Logs  
 from libreria import Libreria as Lib
 import select
+import threading
 
 session = requests.Session()
 
@@ -106,10 +107,9 @@ class Servidor:
                 mensaje_bienvenida = f"Cliente {self.contador_clientes}"
                 client_socket.send(mensaje_bienvenida.encode())
 
-                client_handler = Process(target=self.manejar_cliente, args=(client_socket,))
-                client_handler.start()
+                client_handler = threading.Thread(target=self.manejar_cliente, args=(client_socket,), daemon=True)
 
-                client_socket.close()
+                client_handler.start()
 
     def manejar_cliente(self, client_socket):
         try:
