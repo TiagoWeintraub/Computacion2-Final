@@ -1,11 +1,10 @@
 import socket
 
 class Cliente:
-    def __init__(self, host_ipv4='127.0.0.1', host_ipv6='::1', port_ipv4=5555, port_ipv6=5556):
-        self.host_ipv4 = host_ipv4
+    def __init__(self, host='127.0.0.1', host_ipv6='::1', port=5555):
+        self.host = host
         self.host_ipv6 = host_ipv6
-        self.port_ipv4 = port_ipv4
-        self.port_ipv6 = port_ipv6
+        self.port = port
         self.client_socket = None
         self.conexion = False
 
@@ -15,13 +14,23 @@ class Cliente:
             tipo_conexion = input("\nOpción no válida. | Por favor, elija '4' para IPv4 o '6' para IPv6: ").strip()
 
         if tipo_conexion == '4':
-            self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.host = self.host_ipv4
-            self.port = self.port_ipv4
-        elif tipo_conexion == '6':
-            self.client_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-            self.host = self.host_ipv6
-            self.port = self.port_ipv6
+            try:
+                self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.host = self.host
+                self.port = self.port
+            except Exception as e:
+                print(f"Error al crear el socket IPv4: {e}")
+                return False
+        elif tipo_conexion == '6': # Configuración de la conexión IPv6
+            try:
+                self.client_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+                self.host = self.host_ipv6
+                self.port = self.port
+            except Exception as e:
+                print(f"Error al crear el socket IPv6: {e}")
+                return False
+            
+            
         else:
             print("Opción no válida. | Por favor, elija '4' para IPv4 o '6' para IPv6.")
             return False

@@ -65,17 +65,13 @@ class Scraping:
 
 
 class Servidor:
-    def __init__(self, host_ipv4='0.0.0.0', host_ipv6='::', port_ipv4=5555, port_ipv6=5556, log_queue=None):
-        self.host_ipv4 = host_ipv4
-        self.host_ipv6 = host_ipv6
-        self.port_ipv4 = port_ipv4
-        self.port_ipv6 = port_ipv6
+    def __init__(self, host=None, port=5555, log_queue=None):
+        self.host = host
+        self.port = port
         self.contador_clientes = 0
         self.log_queue = log_queue
-        self.server_socket_ipv4 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_socket_ipv6 = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-        self.server_socket_ipv4.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.server_socket_ipv6.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server_sockets = []  # Lista para almacenar los sockets creados (IPv4 e IPv6).
+
 
     def enviar_logs(self, tipo, mensaje):
         log_entry = {
@@ -85,31 +81,51 @@ class Servidor:
         self.log_queue.put(log_entry)
 
     def start_server(self):
-        self.server_socket_ipv4.bind((self.host_ipv4, self.port_ipv4))
-        self.server_socket_ipv6.bind((self.host_ipv6, self.port_ipv6))
-        self.server_socket_ipv4.listen(5)
-        self.server_socket_ipv6.listen(5)
-        print(f"Servidor escuchando en {self.host_ipv4}:{self.port_ipv4} (IPv4)")
-        print(f"Servidor escuchando en {self.host_ipv6}:{self.port_ipv6} (IPv6)")
-        self.enviar_logs("INFO", f"Servidor iniciado en {self.host_ipv4}:{self.port_ipv4} (IPv4)")
-        self.enviar_logs("INFO", f"Servidor iniciado en {self.host_ipv6}:{self.port_ipv6} (IPv6)")
+        try:
+            addrinfos = socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE)
+            for addrinfo in addrinfos:
+                family, socktype, proto, canonname, sockaddr = addrinfo
+                try:
+                    server_socket = socket.socket(family, socktype, proto)
+                    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        sockets = [self.server_socket_ipv4, self.server_socket_ipv6]
+                    # Si es un socket IPv6, desactivar dual-stack
+                    if family == socket.AF_INET6:
+                        server_socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
 
-        while True:
-            readable, _, _ = select.select(sockets, [], [])
-            for s in readable:
-                client_socket, client_address = s.accept()
-                self.contador_clientes += 1
-                print(f"Cliente {self.contador_clientes} conectado desde {client_address}")
-                self.enviar_logs("INFO", f"Cliente {self.contador_clientes} conectado desde {client_address}")
+                    server_socket.bind(sockaddr)
+                    server_socket.listen(5)
 
-                mensaje_bienvenida = f"Cliente {self.contador_clientes}"
-                client_socket.send(mensaje_bienvenida.encode())
+                    self.server_sockets.append(server_socket)
+                    address_type = "IPv6" if family == socket.AF_INET6 else "IPv4"
+                    print(f"Servidor escuchando en {sockaddr[0]}:{self.port} ({address_type})")
+                    self.enviar_logs("INFO", f"Servidor iniciado en {sockaddr[0]}:{self.port} ({address_type})")
 
-                client_handler = threading.Thread(target=self.manejar_cliente, args=(client_socket,), daemon=True)
+                except Exception as e:
+                    print(f"Error al crear el socket para {sockaddr}: {e}")
+                    self.enviar_logs("ERROR", f"Error al crear el socket para {sockaddr}: {e}")
 
-                client_handler.start()
+            if not self.server_sockets:
+                raise RuntimeError("No se pudieron crear sockets para ninguna de las direcciones")
+
+            # Manejo de conexiones entrantes
+            while True:
+                readable, _, _ = select.select(self.server_sockets, [], [])
+                for s in readable:
+                    client_socket, client_address = s.accept()
+                    self.contador_clientes += 1
+                    print(f"Cliente {self.contador_clientes} conectado desde {client_address}")
+                    self.enviar_logs("INFO", f"Cliente {self.contador_clientes} conectado desde {client_address}")
+
+                    mensaje_bienvenida = f"Cliente {self.contador_clientes}"
+                    client_socket.send(mensaje_bienvenida.encode())
+
+                    client_handler = threading.Thread(target=self.manejar_cliente, args=(client_socket,), daemon=True)
+                    client_handler.start()
+
+        except Exception as e:
+            print(f"Error al iniciar el servidor: {e}")
+            self.enviar_logs("ERROR", f"Error al iniciar el servidor: {e}")
 
     def manejar_cliente(self, client_socket):
         try:
@@ -175,7 +191,7 @@ if __name__ == "__main__":
     log_process.start()
     print(f"PID del log_process: {log_process.pid}")
 
-    server = Servidor(port_ipv4=5555, port_ipv6=5556, log_queue=log_queue)
+    server = Servidor(port=5555, log_queue=log_queue)
     server.start_server()
 
     log_queue.put(None)  
