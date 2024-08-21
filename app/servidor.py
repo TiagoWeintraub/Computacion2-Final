@@ -84,20 +84,22 @@ class Servidor:
         try:
             addrinfos = socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE)
             for addrinfo in addrinfos:
+                print(f"addrinfo: {addrinfo}")
                 family, socktype, proto, canonname, sockaddr = addrinfo
                 try:
-                    server_socket = socket.socket(family, socktype, proto)
+                    server_socket = socket.socket(family, socktype, proto)   
                     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-                    # Si es un socket IPv6, desactivar dual-stack
-                    if family == socket.AF_INET6:
+                    if family == socket.AF_INET6: # Si la familia es IPv6, se configura un socket que solo acepte conexiones IPv6.
                         server_socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
+                        address_type = "IPv6" 
+                    else: # Si la familia es IPv4, se configura un socket que solo acepte conexiones IPv4.
+                        address_type = "IPv4"
 
                     server_socket.bind(sockaddr)
                     server_socket.listen(5)
-
                     self.server_sockets.append(server_socket)
-                    address_type = "IPv6" if family == socket.AF_INET6 else "IPv4"
+
                     print(f"Servidor escuchando en {sockaddr[0]}:{self.port} ({address_type})")
                     self.enviar_logs("INFO", f"Servidor iniciado en {sockaddr[0]}:{self.port} ({address_type})")
 
@@ -108,7 +110,6 @@ class Servidor:
             if not self.server_sockets:
                 raise RuntimeError("No se pudieron crear sockets para ninguna de las direcciones")
 
-            # Manejo de conexiones entrantes
             while True:
                 readable, _, _ = select.select(self.server_sockets, [], [])
                 for s in readable:
