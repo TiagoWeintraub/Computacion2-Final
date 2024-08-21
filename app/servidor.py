@@ -6,6 +6,7 @@ from logs import Logs
 from libreria import Libreria as Lib
 import select
 import threading
+import os
 
 session = requests.Session()
 
@@ -83,16 +84,18 @@ class Servidor:
     def start_server(self):
         try:
             addrinfos = socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE)
+            n = 0
             for addrinfo in addrinfos:
-                print(f"addrinfo: {addrinfo}")
+                print(f"\nAddrinfo {n}: {addrinfo}")
+                n += 1
                 family, socktype, proto, canonname, sockaddr = addrinfo
                 try:
                     server_socket = socket.socket(family, socktype, proto)   
-                    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # Permite reutilizar la dirección del socket.
 
                     if family == socket.AF_INET6: # Si la familia es IPv6, se configura un socket que solo acepte conexiones IPv6.
                         server_socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
-                        address_type = "IPv6" 
+                        address_type = "IPv6"
                     else: # Si la familia es IPv4, se configura un socket que solo acepte conexiones IPv4.
                         address_type = "IPv4"
 
@@ -111,18 +114,23 @@ class Servidor:
                 raise RuntimeError("No se pudieron crear sockets para ninguna de las direcciones")
 
             while True:
-                readable, _, _ = select.select(self.server_sockets, [], [])
-                for s in readable:
-                    client_socket, client_address = s.accept()
-                    self.contador_clientes += 1
-                    print(f"Cliente {self.contador_clientes} conectado desde {client_address}")
-                    self.enviar_logs("INFO", f"Cliente {self.contador_clientes} conectado desde {client_address}")
+                try:
+                    readable, _, _ = select.select(self.server_sockets, [], []) # Selecciona los sockets que están listos para ser leídos.
+                    for s in readable:
+                        client_socket, client_address = s.accept()
+                        self.contador_clientes += 1
+                        print(f"\nCliente {self.contador_clientes} conectado desde {client_address}")
+                        self.enviar_logs("INFO", f"Cliente {self.contador_clientes} conectado desde {client_address}")
 
-                    mensaje_bienvenida = f"Cliente {self.contador_clientes}"
-                    client_socket.send(mensaje_bienvenida.encode())
+                        mensaje_bienvenida = f"Cliente {self.contador_clientes}"
+                        client_socket.send(mensaje_bienvenida.encode())
 
-                    client_handler = threading.Thread(target=self.manejar_cliente, args=(client_socket,), daemon=True)
-                    client_handler.start()
+                        client_handler = threading.Thread(target=self.manejar_cliente, args=(client_socket,), daemon=True)
+                        client_handler.start()
+                except KeyboardInterrupt:
+                    self.enviar_logs("ERROR", "Servidor cerrado por interrupción de teclado")
+                    print("\nInterrupción por teclado detectada. Cerrando el servidor...")
+                    break
 
         except Exception as e:
             print(f"Error al iniciar el servidor: {e}")
@@ -133,12 +141,12 @@ class Servidor:
             while True:
                 isbn = client_socket.recv(1024).decode()
                 if not isbn or isbn.lower() == 'q':
-                    print(f"Cliente {self.contador_clientes} desconectado ")
+                    print(f"\nCliente {self.contador_clientes} desconectado ")
                     self.enviar_logs("INFO", f"Cliente {self.contador_clientes} desconectado")
                     break
 
                 if len(isbn) == 13:
-                    print(f"Recibido ISBN: {isbn}")
+                    print(f"\nCódigo ISBN recibido del cliente {self.contador_clientes}: {isbn}") 
                     self.enviar_logs("INFO", f"ISBN recibido: {isbn} del cliente {self.contador_clientes}")
 
                     scraper = Scraping(isbn)
@@ -147,7 +155,7 @@ class Servidor:
                     if resultados:
                         respuesta = self.obtener_menor_precio(isbn, resultados)
                         client_socket.send(respuesta.encode())
-                        print(f"Enviado al cliente: {respuesta}")
+                        print(f"Respuesta enviada al cliente {self.contador_clientes}")
                         self.enviar_logs("INFO", f"Respuesta enviada al cliente {self.contador_clientes}")
                     else:
                         client_socket.send("Error al obtener precios".encode())
@@ -156,7 +164,6 @@ class Servidor:
                     client_socket.send("ISBN no válido".encode())
                     self.enviar_logs("ERROR", f"ISBN no válido proporcionado por el cliente {self.contador_clientes}: {isbn}")
                 else:
-                    client_socket.send("ISBN no proporcionado".encode())
                     self.enviar_logs("ERROR", f"ISBN no proporcionado por el cliente {self.contador_clientes}")
         except Exception as e:
             print(f"Error al manejar cliente: {e}")
@@ -190,10 +197,11 @@ if __name__ == "__main__":
 
     log_process = Process(target=start_log_process, args=(log_queue,))
     log_process.start()
-    print(f"PID del log_process: {log_process.pid}")
-
+    print(f"\nPID del log_process: {log_process.pid}")
+    print("PID del servidor:", os.getpid()) 
     server = Servidor(port=5555, log_queue=log_queue)
     server.start_server()
 
+    
     log_queue.put(None)  
     log_process.join()

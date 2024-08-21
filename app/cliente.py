@@ -9,9 +9,9 @@ class Cliente:
         self.conexion = False
 
     def configurar_conexion(self):
-        tipo_conexion = input("\n¿Desea usar IPv4 o IPv6? (4/6): ").strip() #Backslash para escapar el caracter especial en la cadena de texto: '4/6' -> '4\/6'
-        while tipo_conexion not in ['4', '6']:
-            tipo_conexion = input("\nOpción no válida. | Por favor, elija '4' para IPv4 o '6' para IPv6: ").strip()
+        tipo_conexion = input("\n¿Desea usar IPv4 o IPv6? Ingrese 4, 6 o 'Q' para salir: ").strip() #Backslash para escapar el caracter especial en la cadena de texto: '4/6' -> '4\/6'
+        while tipo_conexion not in ['4', '6', 'q', 'Q']:
+            tipo_conexion = input("\nOpción no válida. | Por favor, elija '4' para IPv4 - '6' para IPv6 ('Q' para salir): ").strip()
 
         if tipo_conexion == '4':
             try:
@@ -29,7 +29,8 @@ class Cliente:
             except Exception as e:
                 print(f"Error al crear el socket IPv6: {e}")
                 return False
-            
+        elif tipo_conexion in ['q', 'Q']:
+            return False
             
         else:
             print("Opción no válida. | Por favor, elija '4' para IPv4 o '6' para IPv6.")

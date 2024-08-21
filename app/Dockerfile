@@ -5,6 +5,6 @@ WORKDIR /app
 
 RUN pip install -r requirements.txt
 
-EXPOSE 5555 5556
+EXPOSE 5555
 
 CMD ["python", "servidor.py"]
