@@ -101,7 +101,12 @@ class Servidor:
 
                     server_socket.bind(sockaddr)
                     server_socket.listen(5)
-                    self.server_sockets.append(server_socket)
+                    
+                    # Si el socket ya está en la lista de sockets, no se agrega.
+                    if server_socket not in self.server_sockets:
+                        self.server_sockets.append(server_socket)
+                    else:
+                        pass
 
                     print(f"Servidor escuchando en {sockaddr[0]}:{self.port} ({address_type})")
                     self.enviar_logs("INFO", f"Servidor iniciado en {sockaddr[0]}:{self.port} ({address_type})")
