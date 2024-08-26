@@ -102,7 +102,6 @@ class Servidor:
                     server_socket.bind(sockaddr)
                     server_socket.listen(5)
                     
-                    # Si el socket ya está en la lista de sockets, no se agrega.
                     if server_socket not in self.server_sockets:
                         self.server_sockets.append(server_socket)
                     else:
