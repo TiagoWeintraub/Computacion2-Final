@@ -107,18 +107,18 @@ class Servidor:
                         self.enviar_logs("INFO", f"Servidor iniciado en {sockaddr[0]}:{self.port} ({address_type})")
 
                         while True:
-                            conn, res = server_socket.accept()
+                            conn, adress = server_socket.accept()
 
                             
                             if af == socket.AF_INET6:
-                                print(f'\nCliente conectado usando IPv6 desde {res}')
-                                self.enviar_logs("INFO", f'Cliente conectado usando IPv6 desde {res}')
+                                print(f'\nCliente conectado usando IPv6 desde {adress}')
+                                self.enviar_logs("INFO", f'Cliente conectado usando IPv6 desde {adress}')
                             
                             elif af == socket.AF_INET:
-                                print(f'\nCliente conectado usando IPv4 desde {res}')
-                                self.enviar_logs("INFO", f'Cliente conectado usando IPv4 desde {res}')
+                                print(f'\nCliente conectado usando IPv4 desde {adress}')
+                                self.enviar_logs("INFO", f'Cliente conectado usando IPv4 desde {adress}')
                             
-                            self.puerto_cliente = res[1]
+                            self.puerto_cliente = adress[1]
 
                             mensaje_bienvenida = f"Cliente {self.puerto_cliente}"
                             conn.sendall(mensaje_bienvenida.encode())
