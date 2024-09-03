@@ -6,9 +6,14 @@
 4. El servidor almacena los logs en un archivo .log 
 
 
+## ------------------------------ Utilidades ------------------------------ ##
+
 # Listar puertos en escucha con netstat
 netstat -an | grep LISTEN
 
 # Probar ipv6 e ipv4 con Telnet
 telnet ::1  5555 
 telnet 127.0.0.1  5555
+
+# Docker 
+docker build -t compu2-final .
