@@ -1,8 +1,10 @@
 import socket
+import os
+
 
 class Cliente:
-    def __init__(self, port=5555):
-        self.port = port
+    def __init__(self):
+        self.port = int(os.getenv("PUERTO", 5555)) 
         self.client_socket = None
         self.conexion = False
 
@@ -69,7 +71,9 @@ class Cliente:
         print("\nConexión cerrada\n")
 
 if __name__ == "__main__":
+    PUERTO = int(os.getenv("PUERTO"))
     cliente = Cliente()
+    print(cliente.port)
     cliente.conectar()
 
     while cliente.conexion:

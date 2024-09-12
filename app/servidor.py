@@ -4,7 +4,6 @@ from concurrent.futures import ThreadPoolExecutor
 import requests
 from logs import Logs  
 from libreria import Libreria as Lib
-import select
 import threading
 import os
 
@@ -66,7 +65,7 @@ class Scraping:
 
 
 class Servidor:
-    def __init__(self, host=None, port=5555, log_queue=None):
+    def __init__(self, host=None, port=None, log_queue=None):
         self.host = host
         self.port = port
         self.log_queue = log_queue
@@ -202,6 +201,7 @@ def start_log_process(log_queue):
     logger.iniciar_logs(log_queue)
 
 if __name__ == "__main__":
+    PUERTO = int(os.getenv("PUERTO"))
     log_queue = Queue()
 
     # Iniciar el proceso de logs como un proceso separado usando multiprocessing
@@ -212,7 +212,7 @@ if __name__ == "__main__":
 
 
     # Iniciar servidor
-    server = Servidor(port=5555, log_queue=log_queue)
+    server = Servidor(port=PUERTO, log_queue=log_queue)
     server.start_server()
 
     log_queue.put(None)  # Señal para terminar el proceso de logs

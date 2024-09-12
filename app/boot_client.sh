@@ -3,4 +3,5 @@
 # Activar el entorno virtual de la carpeta app/
 echo "Activando entorno virtual y ejecutando cliente..." 
 source bin/activate
+source .env
 python cliente.py
