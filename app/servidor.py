@@ -130,7 +130,7 @@ class Servidor:
                         self.enviar_logs("ERROR", f"Error en el proceso hijo {os.getpid()} al manejar el socket: {e}")
                     
                     finally:
-                        os._exit(0)  # Asegurarse de que el proceso hijo termine
+                        os._exit(0)
 
             if not addrinfos:
                 raise RuntimeError("No se pudieron crear sockets para ninguna de las direcciones")
@@ -139,7 +139,6 @@ class Servidor:
             print(f"Error al iniciar el servidor: {e}")
             self.enviar_logs("ERROR", f"Error al iniciar el servidor: {e}")
 
-        # Bucle infinito para mantener el proceso principal activo
         while True:
             pass
 
@@ -204,16 +203,14 @@ if __name__ == "__main__":
     PUERTO = int(os.getenv("PUERTO"))
     log_queue = Queue()
 
-    # Iniciar el proceso de logs como un proceso separado usando multiprocessing
     log_process = Process(target=start_log_process, args=(log_queue,))
     log_process.start()
     print(f"PID del log_process: {log_process.pid}")
     print("PID del PP:", os.getpid())
 
 
-    # Iniciar servidor
     server = Servidor(port=PUERTO, log_queue=log_queue)
     server.start_server()
 
-    log_queue.put(None)  # Señal para terminar el proceso de logs
+    log_queue.put(None)  
     log_process.join()
